@@ -1,0 +1,927 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="同频">
+<meta name="theme-color" content="#7B6FCD">
+<title>同频 · 一起看</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+:root {
+  --pri: #7B6FCD;
+  --pri-light: #EDE9FA;
+  --green: #4CAF88;
+  --green-light: #E3F5EE;
+  --bg: #F5F3FC;
+  --surface: #FFFFFF;
+  --border: #E8E4F0;
+  --text: #1A1525;
+  --muted: #8B85A0;
+  --red: #E05555;
+  --red-light: #FFF0F0;
+  --safe-top: env(safe-area-inset-top, 44px);
+  --safe-bottom: env(safe-area-inset-bottom, 20px);
+}
+
+html, body {
+  height: 100%; overflow: hidden;
+  font-family: 'Nunito', 'Noto Sans SC', sans-serif;
+  background: var(--bg); color: var(--text);
+  font-size: 15px;
+}
+
+#app {
+  height: 100vh; height: -webkit-fill-available;
+  display: flex; flex-direction: column;
+  overflow: hidden;
+  padding-top: var(--safe-top);
+  padding-bottom: var(--safe-bottom);
+}
+
+/* ── STATUS BAR PLACEHOLDER ── */
+.status-bar {
+  height: var(--safe-top);
+  position: fixed; top: 0; left: 0; right: 0;
+  background: var(--surface);
+  z-index: 100;
+}
+
+/* ── NAV BAR ── */
+.navbar {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 12px 18px;
+  display: flex; align-items: center; gap: 12px;
+  flex-shrink: 0;
+}
+.nav-logo {
+  width: 34px; height: 34px;
+  background: linear-gradient(135deg, #7B6FCD, #A891F5);
+  border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 17px; font-weight: 800; color: white;
+}
+.nav-title { font-size: 17px; font-weight: 800; }
+.nav-sub { font-size: 11px; color: var(--muted); margin-top: 1px; }
+.badge-live {
+  margin-left: auto;
+  display: flex; align-items: center; gap: 5px;
+  font-size: 11px; font-weight: 700;
+  padding: 4px 10px; border-radius: 20px;
+  background: var(--green-light); color: var(--green);
+}
+.live-dot {
+  width: 7px; height: 7px; border-radius: 50%; background: var(--green);
+  animation: pulse 1.4s ease-in-out infinite;
+}
+@keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.5;transform:scale(.8)} }
+
+/* ── SCROLL CONTENT ── */
+.scroll-content {
+  flex: 1; overflow-y: auto; overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  padding: 16px;
+}
+.scroll-content::-webkit-scrollbar { display: none; }
+
+/* ── BOTTOM TAB BAR ── */
+.tab-bar {
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+  display: flex;
+  flex-shrink: 0;
+  padding-bottom: 4px;
+}
+.tab-item {
+  flex: 1; display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  padding: 8px 4px; gap: 3px;
+  cursor: pointer;
+  font-size: 10px; font-weight: 700; color: var(--muted);
+  transition: color .15s;
+  -webkit-user-select: none;
+}
+.tab-item.active { color: var(--pri); }
+.tab-icon { font-size: 22px; line-height: 1; }
+
+/* ── CARDS ── */
+.card {
+  background: var(--surface); border-radius: 16px;
+  padding: 16px; margin-bottom: 12px;
+  border: 1.5px solid var(--border);
+}
+.card-title {
+  font-size: 11px; font-weight: 700; color: var(--muted);
+  text-transform: uppercase; letter-spacing: .5px; margin-bottom: 10px;
+}
+
+/* ── BUTTONS ── */
+.btn {
+  width: 100%; padding: 15px;
+  border-radius: 14px; border: none; cursor: pointer;
+  font-size: 16px; font-weight: 700; font-family: inherit;
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  transition: all .18s; -webkit-user-select: none;
+}
+.btn:active { transform: scale(.97); }
+.btn-primary {
+  background: linear-gradient(135deg, #7B6FCD, #A891F5);
+  color: white; box-shadow: 0 6px 20px rgba(123,111,205,.3);
+}
+.btn-outline {
+  background: var(--surface); color: var(--pri);
+  border: 2px solid var(--border);
+}
+.btn-outline:active { border-color: var(--pri); background: var(--pri-light); }
+.btn-danger { background: var(--red-light); color: var(--red); }
+.btn-sm { padding: 11px; font-size: 14px; border-radius: 12px; }
+
+/* ── INPUTS ── */
+.input-group { margin-bottom: 14px; }
+.input-label { font-size: 12px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; margin-bottom: 6px; }
+.input-field {
+  width: 100%; padding: 14px 16px;
+  border: 2px solid var(--border); border-radius: 14px;
+  font-size: 16px; font-family: inherit; color: var(--text);
+  background: var(--surface); outline: none;
+  transition: border-color .18s;
+  -webkit-appearance: none;
+}
+.input-field:focus { border-color: var(--pri); }
+.input-field::placeholder { color: var(--muted); }
+.input-code {
+  text-align: center; font-size: 28px; font-weight: 800;
+  letter-spacing: 10px; text-transform: uppercase;
+}
+
+/* ── INVITE CARD ── */
+.invite-card {
+  background: linear-gradient(135deg, var(--pri-light), #F5F0FF);
+  border: 2px dashed var(--pri);
+  border-radius: 16px; padding: 20px; text-align: center; margin-bottom: 12px;
+}
+.invite-code { font-size: 38px; font-weight: 800; letter-spacing: 10px; color: var(--pri); margin: 8px 0; }
+
+/* ── SYNC STATUS ── */
+.sync-bar {
+  border-radius: 14px; padding: 12px 16px;
+  display: flex; align-items: center; gap: 10px;
+  font-size: 14px; font-weight: 600;
+  margin-bottom: 12px;
+}
+.sync-bar.ok   { background: var(--green-light); color: var(--green); }
+.sync-bar.warn { background: #FFF8E6; color: #C17E20; }
+
+/* ── PROGRESS ── */
+.progress-track { width: 100%; height: 6px; border-radius: 3px; background: var(--border); }
+.progress-fill  { height: 100%; border-radius: 3px; background: linear-gradient(90deg, var(--pri), #A891F5); transition: width .5s; }
+.progress-times { display: flex; justify-content: space-between; font-size: 11px; color: var(--muted); font-weight: 600; margin-top: 5px; }
+
+/* ── PLAYER CONTROLS ── */
+.player-controls { display: flex; align-items: center; justify-content: center; gap: 16px; margin-top: 16px; }
+.ctrl-big {
+  width: 60px; height: 60px; border-radius: 50%; border: none; cursor: pointer;
+  display: flex; align-items: center; justify-content: center; font-size: 26px;
+  transition: transform .15s;
+}
+.ctrl-big:active { transform: scale(.93); }
+.ctrl-big.play { background: linear-gradient(135deg, var(--pri), #A891F5); color: white; box-shadow: 0 6px 20px rgba(123,111,205,.35); }
+.ctrl-big.secondary { background: var(--surface); border: 2px solid var(--border); font-size: 22px; width: 48px; height: 48px; }
+
+/* ── EMOJI TRAY ── */
+.emoji-tray { display: flex; justify-content: space-around; padding: 8px 0; }
+.emoji-btn { font-size: 26px; padding: 8px; border-radius: 12px; background: none; border: none; cursor: pointer; transition: transform .15s; }
+.emoji-btn:active { transform: scale(1.3); }
+
+/* ── MEMBERS ── */
+.member-row { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--border); }
+.member-row:last-child { border-bottom: none; }
+.avatar { width: 42px; height: 42px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 20px; color: white; flex-shrink: 0; }
+.member-info { flex: 1; }
+.member-name { font-size: 15px; font-weight: 700; }
+.member-status { font-size: 12px; color: var(--muted); margin-top: 2px; }
+.tag { font-size: 11px; font-weight: 700; padding: 3px 9px; border-radius: 20px; }
+.tag-host { background: #FFF5E6; color: #E07B20; }
+.wave { display: flex; align-items: flex-end; gap: 2.5px; height: 18px; }
+.wave-bar { width: 3px; border-radius: 2px; background: var(--green); animation: wave-anim var(--d,.6s) ease-in-out infinite alternate; }
+@keyframes wave-anim { from{height:3px} to{height:var(--h,16px)} }
+
+/* ── CHAT ── */
+.chat-wrap { display: flex; flex-direction: column; height: 100%; }
+.chat-messages { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; padding-bottom: 8px; }
+.chat-messages::-webkit-scrollbar { display: none; }
+.chat-msg { display: flex; gap: 8px; margin-bottom: 12px; }
+.bubble { max-width: 75%; padding: 10px 14px; border-radius: 16px; font-size: 15px; line-height: 1.5; }
+.bubble-mine { background: linear-gradient(135deg, var(--pri), #A891F5); color: white; margin-left: auto; border-bottom-right-radius: 4px; }
+.bubble-other { background: var(--surface); border: 1.5px solid var(--border); border-bottom-left-radius: 4px; }
+.chat-name { font-size: 11px; font-weight: 700; color: var(--muted); margin-bottom: 4px; }
+.chat-time { font-size: 10px; color: var(--muted); margin-top: 4px; }
+.chat-system { text-align: center; margin: 10px 0; }
+.chat-system span { font-size: 12px; color: var(--muted); background: var(--bg); padding: 4px 12px; border-radius: 20px; border: 1px solid var(--border); }
+.avatar-sm { width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; color: white; flex-shrink: 0; }
+
+/* ── CHAT INPUT ── */
+.chat-input-bar {
+  background: var(--surface); border-top: 1px solid var(--border);
+  padding: 10px 14px; display: flex; align-items: center; gap: 10px;
+  flex-shrink: 0;
+}
+.chat-input {
+  flex: 1; padding: 11px 16px;
+  border: 2px solid var(--border); border-radius: 24px;
+  font-size: 15px; font-family: inherit; outline: none;
+  background: var(--bg); color: var(--text);
+  transition: border-color .18s; -webkit-appearance: none;
+}
+.chat-input:focus { border-color: var(--pri); }
+.send-btn {
+  width: 42px; height: 42px; border-radius: 50%;
+  background: linear-gradient(135deg, var(--pri), #A891F5);
+  border: none; cursor: pointer; color: white; font-size: 18px;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0; transition: transform .15s;
+}
+.send-btn:active { transform: scale(.93); }
+
+/* ── VOICE ── */
+.voice-hero {
+  background: linear-gradient(135deg, #1A1135, #2D1E5A);
+  border-radius: 18px; padding: 20px; margin-bottom: 12px; color: white;
+}
+.voice-status { display: flex; align-items: center; gap: 8px; margin-bottom: 16px; }
+.voice-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--green); box-shadow: 0 0 0 3px rgba(76,207,136,.25); animation: pulse 1.4s infinite; }
+.voice-status-text { font-size: 13px; font-weight: 700; opacity: .85; }
+.voice-timer { margin-left: auto; font-family: monospace; font-size: 13px; opacity: .6; }
+.voice-members { display: flex; gap: 20px; justify-content: center; }
+.voice-member { display: flex; flex-direction: column; align-items: center; gap: 7px; }
+.voice-avatar-wrap { position: relative; }
+.voice-ring { position: absolute; inset: -5px; border-radius: 50%; border: 2.5px solid var(--green); animation: ring-pulse 1s ease-in-out infinite alternate; }
+@keyframes ring-pulse { from{opacity:.3;transform:scale(.95)} to{opacity:1;transform:scale(1.05)} }
+.voice-avatar { width: 52px; height: 52px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 24px; }
+.voice-member-name { font-size: 12px; font-weight: 700; opacity: .85; }
+.voice-wave { display: flex; align-items: center; gap: 2px; height: 18px; }
+.voice-wave-bar { width: 3px; border-radius: 2px; background: rgba(255,255,255,.7); animation: wave-anim var(--d,.6s) ease-in-out infinite alternate; }
+
+.mic-card {
+  background: var(--surface); border-radius: 16px; padding: 16px;
+  border: 1.5px solid var(--border); margin-bottom: 12px;
+  display: flex; align-items: center; gap: 16px;
+}
+.mic-btn {
+  width: 64px; height: 64px; border-radius: 50%; border: none; cursor: pointer;
+  display: flex; align-items: center; justify-content: center; font-size: 28px;
+  flex-shrink: 0; transition: transform .15s;
+}
+.mic-btn:active { transform: scale(.93); }
+.mic-btn.on  { background: linear-gradient(135deg, var(--pri), #A891F5); box-shadow: 0 6px 20px rgba(123,111,205,.4); }
+.mic-btn.off { background: var(--red-light); }
+.mic-info { flex: 1; }
+.mic-level { height: 5px; border-radius: 3px; background: var(--border); overflow: hidden; margin: 6px 0 4px; }
+.mic-fill { height: 100%; border-radius: 3px; background: linear-gradient(90deg, var(--green), #A8E063); animation: mic-anim .8s ease-in-out infinite alternate; }
+@keyframes mic-anim { from{width:30%} to{width:72%} }
+
+/* Toggle */
+.toggle-row {
+  display: flex; align-items: center; gap: 12px; padding: 14px 16px;
+  border-radius: 14px; background: var(--surface); border: 1.5px solid var(--border);
+  cursor: pointer; margin-bottom: 8px; transition: border-color .15s;
+}
+.toggle-row.on { border-color: var(--pri); background: var(--pri-light); }
+.toggle-icon { font-size: 22px; flex-shrink: 0; }
+.toggle-info { flex: 1; }
+.toggle-label { font-size: 15px; font-weight: 700; }
+.toggle-desc { font-size: 12px; color: var(--muted); margin-top: 2px; }
+.switch { width: 48px; height: 28px; border-radius: 14px; position: relative; flex-shrink: 0; transition: background .2s; }
+.switch.on { background: var(--pri); }
+.switch.off { background: #C8C3D8; }
+.knob { position: absolute; top: 3px; width: 22px; height: 22px; border-radius: 50%; background: white; box-shadow: 0 2px 6px rgba(0,0,0,.2); transition: left .2s; }
+.switch.on .knob { left: 23px; }
+.switch.off .knob { left: 3px; }
+
+/* Range */
+.range-row { display: flex; flex-direction: column; gap: 8px; padding: 14px 16px; background: var(--surface); border-radius: 14px; border: 1.5px solid var(--border); margin-bottom: 8px; }
+.range-label-row { display: flex; justify-content: space-between; font-size: 13px; font-weight: 700; }
+.range-label-row span:last-child { color: var(--pri); }
+input[type=range] { width: 100%; height: 5px; border-radius: 3px; appearance: none; -webkit-appearance: none; outline: none; cursor: pointer; }
+input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 22px; height: 22px; border-radius: 50%; background: var(--pri); box-shadow: 0 2px 8px rgba(123,111,205,.4); }
+
+/* Quality chips */
+.quality-chips { display: flex; gap: 8px; margin-bottom: 12px; }
+.q-chip { flex: 1; padding: 10px 6px; border-radius: 12px; text-align: center; cursor: pointer; border: 2px solid var(--border); background: var(--surface); transition: all .15s; }
+.q-chip.on { border-color: var(--pri); background: var(--pri-light); }
+.q-chip-label { font-size: 13px; font-weight: 700; }
+.q-chip.on .q-chip-label { color: var(--pri); }
+.q-chip-sub { font-size: 10px; color: var(--muted); margin-top: 2px; }
+
+/* ── WELCOME SCREEN ── */
+.welcome { min-height: 100%; display: flex; flex-direction: column; }
+.welcome-hero { text-align: center; padding: 40px 20px 30px; }
+.welcome-logo { width: 80px; height: 80px; background: linear-gradient(135deg, #7B6FCD, #A891F5); border-radius: 22px; display: flex; align-items: center; justify-content: center; font-size: 40px; font-weight: 800; color: white; margin: 0 auto 16px; }
+.welcome-title { font-size: 28px; font-weight: 800; margin-bottom: 8px; }
+.welcome-sub { font-size: 15px; color: var(--muted); line-height: 1.5; }
+.divider { display: flex; align-items: center; gap: 10px; color: var(--muted); font-size: 13px; font-weight: 600; margin: 16px 0; }
+.divider::before,.divider::after { content:''; flex:1; height:1px; background:var(--border); }
+
+/* ── SECTION TITLE ── */
+.section-title { font-size: 13px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; margin-bottom: 10px; margin-top: 4px; }
+
+/* ── ANIMATE ── */
+.fade-in { animation: fade-in .22s ease both; }
+@keyframes fade-in { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:none} }
+</style>
+</head>
+<body>
+
+<div id="app"></div>
+
+<script>
+// ── CONFIG ────────────────────────────────────────────────────
+const SERVER_URL = 'wss://perfect-transformation-production-c373.up.railway.app';
+
+// ── CONSTANTS ─────────────────────────────────────────────────
+const COLORS  = ['#7B6FCD','#FF6B9D','#4CAF88','#4A90D9','#E07B30'];
+const EMOJIS  = ['🐱','🐰','🦊','🐻','🐼'];
+
+// ── STATE ─────────────────────────────────────────────────────
+const S = {
+  screen:      'welcome',  // welcome | create | join | room
+  tab:         'home',     // home | chat | members | voice
+  name:        '',
+  roomCode:    '',
+  joinCode:    '',
+  isHost:      false,
+  userId:      uid(),
+  ws:          null,
+  members:     [],
+  messages:    [],
+  progress:    { current: 0, duration: 0, paused: true },
+  micOn:       true,
+  noiseReduce: true,
+  echoCancel:  true,
+  autoGain:    false,
+  noiseLevel:  70,
+  volume:      80,
+  quality:     'balanced',
+  localStream: null,
+  peers:       {},
+  callStart:   Date.now(),
+  callTimer:   null,
+};
+
+// ── RENDER ────────────────────────────────────────────────────
+function render() {
+  document.getElementById('app').innerHTML = buildApp();
+  bindEvents();
+  if (S.screen === 'room' && S.tab === 'chat') scrollChatBottom();
+}
+
+function buildApp() {
+  if (S.screen === 'welcome') return buildWelcome();
+  if (S.screen === 'create')  return buildCreate();
+  if (S.screen === 'join')    return buildJoin();
+  if (S.screen === 'room')    return buildRoom();
+  return '';
+}
+
+// ── WELCOME ───────────────────────────────────────────────────
+function buildWelcome() {
+  return `
+    <div class="scroll-content fade-in" style="display:flex;flex-direction:column">
+      <div class="welcome-hero">
+        <div class="welcome-logo">同</div>
+        <div class="welcome-title">同频</div>
+        <div class="welcome-sub">和朋友一起看视频<br>语音聊天，同步进度</div>
+      </div>
+      <div style="padding:0 4px">
+        <div class="input-group">
+          <div class="input-label">你的昵称</div>
+          <input class="input-field" id="input-name" placeholder="起个好听的名字..." value="${esc(S.name)}">
+        </div>
+        <button class="btn btn-primary" id="btn-create" style="margin-bottom:12px">✨ 创建房间</button>
+        <div class="divider">已有房间码？</div>
+        <button class="btn btn-outline" id="btn-goto-join" style="margin-top:12px">🔗 加入房间</button>
+      </div>
+    </div>`;
+}
+
+// ── CREATE ────────────────────────────────────────────────────
+function buildCreate() {
+  return `
+    <div style="display:flex;flex-direction:column;height:100%">
+      ${buildNavbar('邀请好友')}
+      <div class="scroll-content fade-in">
+        <div class="invite-card">
+          <div style="font-size:13px;font-weight:700;color:var(--muted)">房间码</div>
+          <div class="invite-code">${S.roomCode}</div>
+          <div style="font-size:12px;color:var(--muted)">发给朋友，最多 5 人可加入</div>
+        </div>
+        <div class="card">
+          <div class="card-title">分享链接</div>
+          <div style="display:flex;gap:8px;align-items:center">
+            <div style="flex:1;padding:10px 12px;background:var(--bg);border-radius:10px;font-size:12px;color:var(--muted);font-family:monospace;border:1.5px solid var(--border);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">
+              tongpin.app/room/${S.roomCode}
+            </div>
+            <button id="btn-copy" style="padding:10px 14px;border-radius:10px;border:none;background:var(--pri-light);color:var(--pri);font-weight:700;font-size:13px;cursor:pointer;font-family:inherit">复制</button>
+          </div>
+        </div>
+        <button class="btn btn-primary" id="btn-enter-room">开始观影 →</button>
+        <div style="text-align:center;font-size:13px;color:var(--muted);margin-top:12px">朋友加入后自动同步进度</div>
+      </div>
+    </div>`;
+}
+
+// ── JOIN ──────────────────────────────────────────────────────
+function buildJoin() {
+  return `
+    <div style="display:flex;flex-direction:column;height:100%">
+      ${buildNavbar('加入房间')}
+      <div class="scroll-content fade-in">
+        <div style="text-align:center;font-size:52px;margin:20px 0">🎉</div>
+        <div class="input-group">
+          <div class="input-label">你的昵称</div>
+          <input class="input-field" id="input-name2" placeholder="起个好听的名字..." value="${esc(S.name)}">
+        </div>
+        <div class="input-group">
+          <div class="input-label">房间码</div>
+          <input class="input-field input-code" id="input-code" placeholder="ABC123" maxlength="6" value="${S.joinCode}" autocapitalize="characters">
+        </div>
+        <button class="btn btn-primary" id="btn-do-join">加入观影 →</button>
+        <div style="text-align:center;font-size:13px;color:var(--muted);margin-top:14px">加入后视频将自动同步</div>
+      </div>
+    </div>`;
+}
+
+// ── ROOM ──────────────────────────────────────────────────────
+function buildRoom() {
+  return `
+    <div style="display:flex;flex-direction:column;height:100%">
+      ${buildRoomNavbar()}
+      ${S.tab !== 'chat' ? buildContent() : ''}
+      ${S.tab === 'chat' ? buildChatTab() : ''}
+      ${buildTabBar()}
+    </div>`;
+}
+
+function buildRoomNavbar() {
+  return `
+    <div class="navbar">
+      <div class="nav-logo">同</div>
+      <div>
+        <div class="nav-title">同频观影中</div>
+        <div class="nav-sub">房间 ${S.roomCode} · ${S.members.length || 3} 人</div>
+      </div>
+      <div class="badge-live"><div class="live-dot"></div>直播中</div>
+    </div>`;
+}
+
+function buildContent() {
+  switch (S.tab) {
+    case 'home':    return buildHomeTab();
+    case 'members': return buildMembersTab();
+    case 'voice':   return buildVoiceTab();
+  }
+}
+
+function buildHomeTab() {
+  const { current, duration, paused } = S.progress;
+  const pct = duration ? Math.min(100, current / duration * 100) : 38;
+  return `
+    <div class="scroll-content fade-in">
+      <div class="sync-bar ok">🔄 已同步 · 正在播放
+        <span style="margin-left:auto;font-size:12px">${fmtSec(current)}</span>
+      </div>
+      <div class="card">
+        <div class="card-title">播放进度</div>
+        <div class="progress-track"><div class="progress-fill" style="width:${pct.toFixed(1)}%"></div></div>
+        <div class="progress-times">
+          <span>${fmtSec(current)}</span>
+          <span style="color:var(--pri);font-weight:700">${S.isHost ? '👑 你在控制' : '👑 主持人控制'}</span>
+          <span>${fmtSec(duration || 3560)}</span>
+        </div>
+        <div class="player-controls">
+          <button class="ctrl-big secondary" id="ctrl-prev">⏮</button>
+          <button class="ctrl-big play" id="ctrl-play">${paused ? '▶' : '⏸'}</button>
+          <button class="ctrl-big secondary" id="ctrl-next">⏭</button>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">快速反应</div>
+        <div class="emoji-tray">
+          ${['😂','❤️','😮','👏','😭','🎉'].map(e => `<button class="emoji-btn" data-emoji="${e}">${e}</button>`).join('')}
+        </div>
+      </div>
+      <button class="btn btn-danger btn-sm" id="btn-leave">离开房间</button>
+    </div>`;
+}
+
+function buildMembersTab() {
+  const list = S.members.length ? S.members : mockMembers();
+  return `
+    <div class="scroll-content fade-in">
+      ${list.map((m,i) => `
+        <div class="member-row">
+          <div class="avatar" style="background:${COLORS[i%5]}">${EMOJIS[i%5]}</div>
+          <div class="member-info">
+            <div class="member-name">${esc(m.name)}${m.isMe?' (你)':''}</div>
+            <div class="member-status">● 在线</div>
+          </div>
+          ${m.speaking ? `<div class="wave">${[14,8,18,6,12].map((h,j)=>`<div class="wave-bar" style="--h:${h}px;--d:${.35+j*.08}s"></div>`).join('')}</div>` : ''}
+          ${m.isHost ? `<span class="tag tag-host">主持</span>` : ''}
+        </div>`).join('')}
+      <button class="btn btn-outline" style="margin-top:12px">🔗 邀请更多好友</button>
+    </div>`;
+}
+
+function buildVoiceTab() {
+  const members = S.members.length ? S.members : mockMembers();
+  const { micOn, noiseReduce, echoCancel, autoGain, noiseLevel, volume, quality } = S;
+  return `
+    <div class="scroll-content fade-in">
+      <div class="voice-hero">
+        <div class="voice-status">
+          <div class="voice-dot"></div>
+          <span class="voice-status-text">语音通话中</span>
+          <span class="voice-timer" id="voice-timer">00:00</span>
+        </div>
+        <div class="voice-members">
+          ${members.slice(0,4).map((m,i) => `
+            <div class="voice-member">
+              <div class="voice-avatar-wrap">
+                <div class="voice-avatar" style="background:${COLORS[i%5]}">${EMOJIS[i%5]}</div>
+                ${m.speaking ? '<div class="voice-ring"></div>' : ''}
+              </div>
+              <div class="voice-member-name">${esc(m.name.split(' ')[0])}</div>
+              ${m.speaking
+                ? `<div class="voice-wave">${[14,8,18,6,12,16,4].map((h,j)=>`<div class="voice-wave-bar" style="--h:${h}px;--d:${.35+j*.07}s"></div>`).join('')}</div>`
+                : `<div style="font-size:11px;opacity:.4">—</div>`}
+            </div>`).join('')}
+        </div>
+      </div>
+
+      <div class="mic-card">
+        <button class="mic-btn ${micOn?'on':'off'}" id="mic-btn">${micOn?'🎤':'🔇'}</button>
+        <div class="mic-info">
+          <div style="font-size:14px;font-weight:700;color:var(--muted)">${micOn?'麦克风音量':'麦克风已关闭'}</div>
+          <div class="mic-level">${micOn?'<div class="mic-fill"></div>':''}</div>
+          <div style="font-size:12px;color:var(--muted)">${micOn?'输入正常':'点击左侧开启'}</div>
+        </div>
+      </div>
+
+      <div class="range-row">
+        <div class="range-label-row"><span>🔊 对方音量</span><span>${volume}%</span></div>
+        <input type="range" id="vol-slider" min="0" max="100" value="${volume}"
+          style="background:linear-gradient(90deg,var(--pri) ${volume}%,var(--border) ${volume}%)">
+      </div>
+
+      <div class="section-title">音频优化</div>
+
+      <div class="toggle-row ${noiseReduce?'on':''}" id="toggle-noise">
+        <span class="toggle-icon">🎚️</span>
+        <div class="toggle-info">
+          <div class="toggle-label">背景降噪</div>
+          <div class="toggle-desc">过滤键盘声、环境噪音</div>
+        </div>
+        <div class="switch ${noiseReduce?'on':'off'}"><div class="knob"></div></div>
+      </div>
+      ${noiseReduce ? `
+        <div style="padding:10px 14px 12px;background:var(--pri-light);border-radius:12px;margin-bottom:8px;margin-top:-4px">
+          <div style="font-size:12px;font-weight:700;color:var(--pri);margin-bottom:7px;display:flex;justify-content:space-between">
+            <span>降噪强度</span><span>${noiseLevel<40?'轻柔':noiseLevel<75?'标准':'强力'}</span>
+          </div>
+          <input type="range" id="noise-slider" min="0" max="100" value="${noiseLevel}"
+            style="background:linear-gradient(90deg,var(--pri) ${noiseLevel}%,rgba(123,111,205,.15) ${noiseLevel}%)">
+          <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--pri);margin-top:4px;opacity:.7">
+            <span>轻柔</span><span>标准</span><span>强力</span>
+          </div>
+        </div>` : ''}
+
+      <div class="toggle-row ${echoCancel?'on':''}" id="toggle-echo">
+        <span class="toggle-icon">🔁</span>
+        <div class="toggle-info">
+          <div class="toggle-label">回声消除</div>
+          <div class="toggle-desc">防止对方声音回传</div>
+        </div>
+        <div class="switch ${echoCancel?'on':'off'}"><div class="knob"></div></div>
+      </div>
+
+      <div class="toggle-row ${autoGain?'on':''}" id="toggle-gain">
+        <span class="toggle-icon">📈</span>
+        <div class="toggle-info">
+          <div class="toggle-label">自动增益</div>
+          <div class="toggle-desc">自动调节麦克风音量</div>
+        </div>
+        <div class="switch ${autoGain?'on':'off'}"><div class="knob"></div></div>
+      </div>
+
+      <div class="section-title" style="margin-top:14px">通话质量</div>
+      <div class="quality-chips">
+        ${[{id:'smooth',l:'流畅',s:'64k'},{id:'balanced',l:'均衡',s:'96k'},{id:'hd',l:'HD',s:'128k'}].map(q=>`
+          <div class="q-chip ${quality===q.id?'on':''}" data-q="${q.id}">
+            <div class="q-chip-label">${q.l}</div>
+            <div class="q-chip-sub">${q.s}</div>
+          </div>`).join('')}
+      </div>
+    </div>`;
+}
+
+function buildChatTab() {
+  const msgs = S.messages.length ? S.messages : mockMessages();
+  return `
+    <div style="flex:1;display:flex;flex-direction:column;overflow:hidden">
+      <div class="scroll-content" id="chat-msgs" style="flex:1">
+        ${msgs.map(m => {
+          if (m.sys) return `<div class="chat-system"><span>🔄 ${m.text}</span></div>`;
+          return `
+            <div class="chat-msg" style="flex-direction:${m.mine?'row-reverse':'row'}">
+              ${!m.mine ? `<div class="avatar-sm" style="background:${COLORS[m.ai||0]}">${EMOJIS[m.ai||0]}</div>` : ''}
+              <div style="display:flex;flex-direction:column;align-items:${m.mine?'flex-end':'flex-start'}">
+                ${!m.mine ? `<div class="chat-name">${esc(m.name)}</div>` : ''}
+                <div class="bubble ${m.mine?'bubble-mine':'bubble-other'}">${esc(m.text)}</div>
+                <div class="chat-time">${m.time}</div>
+              </div>
+            </div>`;
+        }).join('')}
+      </div>
+      <div class="chat-input-bar">
+        <input class="chat-input" id="chat-input" placeholder="说点什么..." />
+        <button class="send-btn" id="send-btn">➤</button>
+      </div>
+    </div>`;
+}
+
+function buildTabBar() {
+  const tabs = [
+    { id:'home',    icon:'🏠', label:'主页' },
+    { id:'chat',    icon:'💬', label:'聊天' },
+    { id:'members', icon:'👥', label:'成员' },
+    { id:'voice',   icon:'🎤', label:'语音' },
+  ];
+  return `
+    <div class="tab-bar">
+      ${tabs.map(t => `
+        <div class="tab-item ${S.tab===t.id?'active':''}" data-tab="${t.id}">
+          <div class="tab-icon">${t.icon}</div>
+          <div>${t.label}</div>
+        </div>`).join('')}
+    </div>`;
+}
+
+function buildNavbar(title) {
+  return `
+    <div class="navbar">
+      <button id="btn-back" style="background:none;border:none;cursor:pointer;font-size:15px;font-weight:700;color:var(--muted);font-family:inherit;display:flex;align-items:center;gap:4px">← 返回</button>
+      <div style="font-size:16px;font-weight:800;margin:0 auto">${title}</div>
+      <div style="width:50px"></div>
+    </div>`;
+}
+
+// ── EVENTS ────────────────────────────────────────────────────
+function bindEvents() {
+  q('#btn-create')?.addEventListener('click', () => {
+    S.name = q('#input-name')?.value.trim() || '用户';
+    S.roomCode = genCode();
+    connectWS(() => {
+      S.ws.send(JSON.stringify({ type:'create', roomCode:S.roomCode, userId:S.userId, name:S.name, isHost:true }));
+    });
+    S.isHost = true;
+    S.screen = 'create'; render();
+  });
+
+  q('#btn-goto-join')?.addEventListener('click', () => {
+    S.name = q('#input-name')?.value.trim() || '用户';
+    S.screen = 'join'; render();
+  });
+
+  q('#btn-back')?.addEventListener('click', () => { S.screen = 'welcome'; render(); });
+
+  q('#btn-copy')?.addEventListener('click', async () => {
+    try { await navigator.clipboard.writeText(`tongpin.app/room/${S.roomCode}`); } catch {}
+    const btn = q('#btn-copy');
+    if (btn) { btn.textContent = '✓ 已复制'; setTimeout(() => { btn.textContent = '复制'; }, 2000); }
+  });
+
+  q('#btn-enter-room')?.addEventListener('click', () => { S.screen='room'; S.tab='home'; render(); startCallTimer(); });
+
+  q('#btn-do-join')?.addEventListener('click', () => {
+    const code = q('#input-code')?.value.trim().toUpperCase();
+    const name = q('#input-name2')?.value.trim() || '用户';
+    if (!code || code.length < 4) { q('#input-code').style.borderColor='var(--red)'; return; }
+    S.name = name; S.joinCode = code; S.roomCode = code; S.isHost = false;
+    connectWS(() => {
+      S.ws.send(JSON.stringify({ type:'join', roomCode:code, userId:S.userId, name, isHost:false }));
+    });
+    S.screen = 'room'; S.tab = 'home'; render(); startCallTimer();
+  });
+
+  // Tab bar
+  document.querySelectorAll('.tab-item').forEach(el => {
+    el.addEventListener('click', () => {
+      S.tab = el.dataset.tab; render();
+      if (S.tab === 'voice') updateCallTimer();
+    });
+  });
+
+  q('#btn-leave')?.addEventListener('click', () => {
+    S.ws?.close(); S.ws = null; S.screen = 'welcome'; S.tab = 'home';
+    clearInterval(S.callTimer); render();
+  });
+
+  q('#ctrl-play')?.addEventListener('click', () => {
+    S.progress.paused = !S.progress.paused;
+    // In real use, this sends sync to server if isHost
+    render();
+  });
+
+  // Emoji
+  document.querySelectorAll('.emoji-btn').forEach(el => {
+    el.addEventListener('click', () => {
+      const e = el.dataset.emoji;
+      S.messages.push({ sys:true, text:`你发送了 ${e}` });
+      render();
+    });
+  });
+
+  // Chat
+  const chatInput = q('#chat-input');
+  q('#send-btn')?.addEventListener('click', sendChat);
+  chatInput?.addEventListener('keydown', e => { if (e.key==='Enter') sendChat(); });
+
+  // Mic
+  q('#mic-btn')?.addEventListener('click', () => {
+    S.micOn = !S.micOn;
+    if (S.localStream) S.localStream.getAudioTracks().forEach(t => t.enabled = S.micOn);
+    render();
+  });
+
+  // Volume
+  q('#vol-slider')?.addEventListener('input', e => {
+    S.volume = Number(e.target.value);
+    e.target.style.background = `linear-gradient(90deg,var(--pri) ${S.volume}%,var(--border) ${S.volume}%)`;
+    q('.range-label-row span:last-child') && (q('.range-label-row span:last-child').textContent = S.volume + '%');
+  });
+
+  // Noise level
+  q('#noise-slider')?.addEventListener('input', e => {
+    S.noiseLevel = Number(e.target.value);
+    e.target.style.background = `linear-gradient(90deg,var(--pri) ${S.noiseLevel}%,rgba(123,111,205,.15) ${S.noiseLevel}%)`;
+    applyAudio();
+  });
+
+  // Toggles
+  q('#toggle-noise')?.addEventListener('click', () => { S.noiseReduce=!S.noiseReduce; applyAudio(); render(); });
+  q('#toggle-echo')?.addEventListener('click',  () => { S.echoCancel=!S.echoCancel;   applyAudio(); render(); });
+  q('#toggle-gain')?.addEventListener('click',  () => { S.autoGain=!S.autoGain;       applyAudio(); render(); });
+
+  // Quality chips
+  document.querySelectorAll('.q-chip').forEach(el => {
+    el.addEventListener('click', () => { S.quality = el.dataset.q; render(); });
+  });
+}
+
+// ── CHAT ──────────────────────────────────────────────────────
+function sendChat() {
+  const input = q('#chat-input');
+  const text = input?.value.trim();
+  if (!text) return;
+  S.messages.push({ mine:true, text, time:nowTime() });
+  if (S.ws?.readyState === 1) S.ws.send(JSON.stringify({ type:'chat', roomCode:S.roomCode, userId:S.userId, name:S.name, text }));
+  input.value = '';
+  render(); scrollChatBottom();
+}
+
+function scrollChatBottom() {
+  setTimeout(() => { const el = q('#chat-msgs'); if (el) el.scrollTop = el.scrollHeight; }, 50);
+}
+
+// ── WEBSOCKET ─────────────────────────────────────────────────
+function connectWS(onOpen) {
+  try {
+    const ws = new WebSocket(SERVER_URL);
+    ws.onopen = onOpen;
+    ws.onmessage = e => { try { handleMsg(JSON.parse(e.data)); } catch {} };
+    ws.onclose = () => console.warn('[同频] WS disconnected');
+    S.ws = ws;
+  } catch(e) { console.warn('[同频] Cannot connect to server:', e.message); }
+}
+
+function handleMsg(msg) {
+  switch(msg.type) {
+    case 'room_state':
+      S.members = msg.members || [];
+      render(); break;
+    case 'member_join':
+      S.members.push({ userId:msg.userId, name:msg.name, isHost:msg.isHost });
+      S.messages.push({ sys:true, text:`${msg.name} 加入了房间` });
+      render(); break;
+    case 'member_leave':
+      S.members = S.members.filter(m => m.userId !== msg.userId);
+      S.messages.push({ sys:true, text:`${msg.name} 离开了房间` });
+      render(); break;
+    case 'chat':
+      const ai = S.members.findIndex(m => m.userId === msg.userId);
+      S.messages.push({ name:msg.name, text:msg.text, time:nowTime(), mine:false, ai:Math.max(0,ai) });
+      if (S.tab === 'chat') { render(); scrollChatBottom(); }
+      break;
+    case 'sync':
+      S.progress.current = msg.time;
+      S.progress.paused  = msg.action === 'pause';
+      if (S.tab === 'home') render();
+      break;
+    case 'rtc_offer': case 'rtc_answer': case 'rtc_ice':
+      handleRTC(msg); break;
+  }
+}
+
+// ── WEBRTC ────────────────────────────────────────────────────
+async function startMic() {
+  try {
+    S.localStream = await navigator.mediaDevices.getUserMedia({
+      audio: { noiseSuppression:S.noiseReduce, echoCancellation:S.echoCancel, autoGainControl:S.autoGain }
+    });
+  } catch(e) { S.micOn = false; console.warn('[同频] Mic denied:', e.message); }
+}
+
+function applyAudio() {
+  S.localStream?.getAudioTracks().forEach(t => t.applyConstraints({
+    noiseSuppression:S.noiseReduce, echoCancellation:S.echoCancel, autoGainControl:S.autoGain
+  }).catch(()=>{}));
+}
+
+async function handleRTC(msg) {
+  const { from, type } = msg;
+  if (!from) return;
+  if (type === 'rtc_offer') {
+    const pc = createPC(from);
+    await pc.setRemoteDescription(new RTCSessionDescription(msg.sdp));
+    const ans = await pc.createAnswer();
+    await pc.setLocalDescription(ans);
+    S.ws?.send(JSON.stringify({ type:'rtc_answer', to:from, sdp:ans, roomCode:S.roomCode }));
+  }
+  if (type === 'rtc_answer') {
+    const pc = S.peers[from];
+    if (pc) await pc.setRemoteDescription(new RTCSessionDescription(msg.sdp));
+  }
+  if (type === 'rtc_ice') {
+    const pc = S.peers[from];
+    if (pc && msg.candidate) await pc.addIceCandidate(new RTCIceCandidate(msg.candidate));
+  }
+}
+
+function createPC(peerId) {
+  const pc = new RTCPeerConnection({ iceServers:[{ urls:'stun:stun.l.google.com:19302' }] });
+  S.peers[peerId] = pc;
+  S.localStream?.getTracks().forEach(t => pc.addTrack(t, S.localStream));
+  pc.ontrack = e => { const a = new Audio(); a.srcObject = e.streams[0]; a.volume = S.volume/100; a.play().catch(()=>{}); };
+  pc.onicecandidate = e => { if (e.candidate) S.ws?.send(JSON.stringify({ type:'rtc_ice', to:peerId, candidate:e.candidate, roomCode:S.roomCode })); };
+  return pc;
+}
+
+// ── TIMER ─────────────────────────────────────────────────────
+function startCallTimer() {
+  S.callStart = Date.now();
+  clearInterval(S.callTimer);
+  S.callTimer = setInterval(updateCallTimer, 1000);
+}
+
+function updateCallTimer() {
+  const el = q('#voice-timer');
+  if (el) el.textContent = fmtSec(Math.floor((Date.now() - S.callStart) / 1000));
+}
+
+// ── UTILS ─────────────────────────────────────────────────────
+function q(sel) { return document.querySelector(sel); }
+function uid() { return Math.random().toString(36).slice(2,10); }
+function genCode() { const c='ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; return Array.from({length:6},()=>c[Math.floor(Math.random()*c.length)]).join(''); }
+function fmtSec(s) { s=Math.round(s||0); return `${String(Math.floor(s/60)).padStart(2,'0')}:${String(s%60).padStart(2,'0')}`; }
+function nowTime() { const d=new Date(); return `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`; }
+function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+function mockMembers() {
+  return [
+    { name:'你 (月月)', isHost:false, isMe:true, speaking:true },
+    { name:'晨晨', isHost:true, isMe:false, speaking:false },
+    { name:'阿阳', isHost:false, isMe:false, speaking:true },
+  ];
+}
+
+function mockMessages() {
+  return [
+    { name:'晨晨', text:'好久没看这部了！', time:'22:28', mine:false, ai:1 },
+    { name:'阿阳', text:'这集超感动的 😭', time:'22:29', mine:false, ai:2 },
+    { mine:true, text:'快到精彩部分了！', time:'22:30' },
+    { sys:true, text:'视频已同步至 22:31' },
+    { name:'晨晨', text:'等一下我去拿零食！', time:'22:31', mine:false, ai:1 },
+  ];
+}
+
+// ── INIT ──────────────────────────────────────────────────────
+render();
+startMic();
+</script>
+</body>
+</html>
